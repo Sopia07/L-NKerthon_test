@@ -3,443 +3,1318 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CourseX - 실시간 호가창 기반 수강신청 예측 플랫폼</title>
+    <title>마일리지 할당 수강신청 시스템</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- FontAwesome for fallback icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Google Font (Pretendard-like Inter) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#f0f3ff',
-                            100: '#e0e7ff',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                            900: '#312e81',
-                        },
-                        darkbg: '#0f172a',
-                        cardbg: '#1e293b',
-                        bordercolor: '#334155'
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
     <style>
-        body { background-color: #0b0f19; color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .glow-green { box-shadow: 0 0 20px rgba(16, 185, 129, 0.35); }
-        .glow-yellow { box-shadow: 0 0 20px rgba(245, 158, 11, 0.35); }
-        .glow-red { box-shadow: 0 0 20px rgba(239, 68, 68, 0.35); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: #f8fafc;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="text-slate-800 antialiased min-h-screen flex flex-col justify-between">
 
-    <!-- Navigation Bar -->
-    <header class="border-b border-bordercolor bg-cardbg/80 backdrop-blur sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-2.5 rounded-xl shadow-lg">
-                <i class="fa-solid me-1 fa-chart-line text-xl text-white"></i>
+    <!-- Login Screen Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 transition-all">
+            <div class="bg-gradient-to-r from-blue-700 to-indigo-800 p-6 text-white text-center">
+                <div class="inline-flex p-3 bg-white/10 rounded-full mb-3">
+                    <i data-lucide="graduation-cap" class="w-8 h-8"></i>
+                </div>
+                <h2 class="text-2xl font-bold">마일리지 수강신청</h2>
+                <p class="text-blue-100 text-sm mt-1">한국대학교 수강신청 포털</p>
             </div>
-            <div>
-                <h1 class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400">
-                    CourseX <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Hackathon Edition</span>
-                </h1>
-                <p class="text-xs text-slate-400">연세대학교 트래픽 분산 검증 모델 + 주식 호가창 컷오프 예측 알고리즘</p>
+            
+            <form id="loginForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">학교 선택</label>
+                    <select id="loginSchool" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <option value="한국대학교">한국대학교 (본교)</option>
+                        <option value="한국대학교 세종캠퍼스">한국대학교 (세종)</option>
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">학번</label>
+                        <input type="text" id="loginStudentId" value="2023147001" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="202XXXXXXX">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">성명</label>
+                        <input type="text" id="loginName" value="김마일" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">비밀번호</label>
+                    <input type="password" id="loginPassword" value="••••••••" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+
+                <hr class="my-2 border-slate-100">
+
+                <!-- 시뮬레이션용 학생 프로필 설정 -->
+                <div class="bg-blue-50/60 p-3 rounded-lg border border-blue-100 space-y-3">
+                    <div class="text-xs font-bold text-blue-900 flex items-center justify-between">
+                        <span><i data-lucide="sliders" class="w-3.5 h-3.5 inline mr-1"></i>학생 프로필 설정 (시뮬레이션)</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-600">소속 학과</label>
+                            <select id="loginMajor" class="w-full px-2 py-1.5 border border-slate-300 rounded text-xs bg-white">
+                                <option value="컴퓨터공학과" selected>컴퓨터공학과</option>
+                                <option value="경영학과">경영학과</option>
+                                <option value="전자공학과">전자공학과</option>
+                                <option value="국어국문학과">국어국문학과</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-600">학년</label>
+                            <select id="loginGrade" class="w-full px-2 py-1.5 border border-slate-300 rounded text-xs bg-white">
+                                <option value="4">4학년 (졸업임박)</option>
+                                <option value="3">3학년</option>
+                                <option value="2">2학년</option>
+                                <option value="1">1학년</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 items-center">
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-600">최대 수강학점</label>
+                            <select id="loginMaxCredit" class="w-full px-2 py-1.5 border border-slate-300 rounded text-xs bg-white">
+                                <option value="18" selected>18 학점 (1800 M)</option>
+                                <option value="21">21 학점 (2100 M)</option>
+                                <option value="15">15 학점 (1500 M)</option>
+                            </select>
+                        </div>
+                        <div class="pt-3">
+                            <label class="inline-flex items-center cursor-pointer text-xs font-medium text-slate-700">
+                                <input type="checkbox" id="loginEarlyGrad" class="sr-only peer">
+                                <div class="w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600 relative"></div>
+                                <span class="ml-2 text-[11px]">조기졸업 대상자</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg shadow-md transition duration-150 flex items-center justify-center gap-2 text-sm">
+                    <i data-lucide="log-in" class="w-4 h-4"></i> 로그인 및 수강신청 접속
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Top Header -->
+    <header id="mainHeader" class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand Logo -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-blue-700 text-white p-2 rounded-xl">
+                        <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-slate-900 leading-tight">마일리지 수강신청</h1>
+                        <p class="text-xs text-slate-500" id="userSchoolName">한국대학교 수강신청 시스템</p>
+                    </div>
+                </div>
+
+                <!-- Timer & Round Control Bar -->
+                <div class="flex items-center gap-3">
+                    <!-- Status Badge -->
+                    <div id="roundBadge" class="hidden sm:flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping mr-1.5"></span>
+                        <span id="roundBadgeText">1차 수강신청 진행중</span>
+                    </div>
+
+                    <!-- Countdown Box -->
+                    <div class="bg-slate-900 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-inner">
+                        <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
+                        <div class="text-xs">
+                            <span class="text-slate-400 block text-[10px] leading-3">마감까지 남은시간</span>
+                            <span id="countdownTimer" class="font-mono text-sm font-bold text-amber-300">02:30:00</span>
+                        </div>
+                    </div>
+
+                    <!-- Controls for Timer Simulation -->
+                    <div class="hidden lg:flex items-center space-x-1 border-l pl-3 border-slate-200">
+                        <button onclick="toggleBlindModeSim()" title="종료 1시간전 블라인드 모드 토글" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition flex items-center gap-1">
+                            <i data-lucide="eye-off" class="w-3.5 h-3.5"></i>
+                            <span id="blindBtnText">블라인드 시뮬레이션</span>
+                        </button>
+                        <button onclick="simulateRoundEnd()" title="1차 마감 처리 및 우선순위 결과 산출" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium transition flex items-center gap-1">
+                            <i data-lucide="play" class="w-3.5 h-3.5"></i>
+                            <span>1차 수강마감 실행</span>
+                        </button>
+                    </div>
+
+                    <!-- User Info & Logout -->
+                    <div class="flex items-center pl-3 border-l border-slate-200">
+                        <div class="text-right mr-3 hidden md:block">
+                            <p class="text-xs font-bold text-slate-800" id="headerUserName">김마일 (2023147001)</p>
+                            <p class="text-[11px] text-slate-500" id="headerUserDetail">컴퓨터공학과 | 4학년</p>
+                        </div>
+                        <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="로그아웃">
+                            <i data-lucide="log-out" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="flex items-center space-x-3">
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-2"></span>
-                실시간 트래픽 분산 중 (Server Load: 12%)
-            </span>
-            <button onclick="togglePitchModal()" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/40 transition">
-                <i class="fa-solid fa-lightbulb text-yellow-400 mr-1.5"></i> 해커톤 차별화 피칭 보기
-            </button>
+
+        <!-- Mobile Timer & Controls Row -->
+        <div class="lg:hidden bg-slate-100 px-4 py-2 flex items-center justify-between text-xs border-t border-slate-200">
+            <div class="flex items-center space-x-2">
+                <button onclick="toggleBlindModeSim()" class="px-2 py-1 bg-white border border-slate-300 rounded text-[11px]">
+                    👁️ 블라인드 토글
+                </button>
+                <button onclick="simulateRoundEnd()" class="px-2 py-1 bg-indigo-600 text-white rounded text-[11px]">
+                    ▶ 1차 마감
+                </button>
+            </div>
+            <div class="text-right text-slate-600" id="mobileUserDetail">
+                컴퓨터공학과 4학년
+            </div>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+    <!-- Main Content Area -->
+    <main id="appContent" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full">
 
-        <!-- Hackathon Value Proposition Pitch Banner -->
-        <div class="bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 border border-indigo-500/30 rounded-2xl p-5 shadow-2xl relative overflow-hidden">
-            <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-indigo-500/10 rounded-full blur-3xl"></div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div class="flex items-start space-x-3 border-r border-slate-800 pr-4">
-                    <div class="p-2 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                        <i class="fa-solid fa-shield-halved text-lg"></i>
+        <!-- Top Mileage Overview Card -->
+        <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white rounded-2xl p-5 mb-6 shadow-xl relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
+                <i data-lucide="coins" class="w-64 h-64 text-white"></i>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 relative z-10 items-center">
+                <div class="md:col-span-1 border-b md:border-b-0 md:border-r border-slate-700/60 pb-3 md:pb-0">
+                    <span class="text-xs text-indigo-300 uppercase font-semibold tracking-wider">나의 보유 마일리지</span>
+                    <div class="flex items-baseline space-x-1 mt-1">
+                        <span id="overviewRemainingMileage" class="text-3xl font-black text-amber-400">1,800</span>
+                        <span class="text-sm text-slate-300">/ <span id="overviewTotalMileage">1,800</span> M</span>
                     </div>
-                    <div>
-                        <h4 class="font-bold text-slate-200">1. 이미 검증된 트래픽 분산</h4>
-                        <p class="text-xs text-slate-400 mt-1">연세대학교의 마일리지 입찰 방식으로 순간 수만 명의 동시 접속 서버 마비를 근본적으로 해결했습니다.</p>
+                    <p class="text-xs text-slate-400 mt-1" id="creditFormulaText">최대 18학점 × 100마일리지</p>
+                </div>
+
+                <div class="md:col-span-2 grid grid-cols-3 gap-2 text-center py-1">
+                    <div class="bg-white/10 rounded-xl p-2.5 backdrop-blur-sm border border-white/10">
+                        <span class="text-[11px] text-slate-300 block">신청 과목 수</span>
+                        <span id="overviewAppliedCount" class="text-xl font-bold text-white">0</span>
+                        <span class="text-[10px] text-slate-400">개 과목</span>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-2.5 backdrop-blur-sm border border-white/10">
+                        <span class="text-[11px] text-slate-300 block">할당된 마일리지</span>
+                        <span id="overviewAllocatedMileage" class="text-xl font-bold text-cyan-300">0</span>
+                        <span class="text-[10px] text-slate-400">M</span>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-2.5 backdrop-blur-sm border border-white/10">
+                        <span class="text-[11px] text-slate-300 block">신청 학점 수</span>
+                        <span id="overviewAllocatedCredits" class="text-xl font-bold text-emerald-300">0</span>
+                        <span class="text-[10px] text-slate-400">/ 18 학점</span>
                     </div>
                 </div>
-                <div class="flex items-start space-x-3 border-r border-slate-800 pr-4">
-                    <div class="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                        <i class="fa-solid fa-eye-slash text-lg"></i>
+
+                <div class="md:col-span-1 flex flex-col items-center md:items-end justify-center">
+                    <div id="blindBanner" class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 w-full justify-center md:justify-end">
+                        <i data-lucide="eye" class="w-3.5 h-3.5 text-amber-400"></i>
+                        <span id="blindBannerText">실시간 Cutoff 공개 중</span>
                     </div>
-                    <div>
-                        <h4 class="font-bold text-slate-200">2. 기존 연세대 모델의 문제</h4>
-                        <p class="text-xs text-slate-400 mt-1">복잡한 동점자 기준 및 깜깜이 입찰로 학생들이 합격 여부를 전혀 예측하지 못하는 불확실성이 존재합니다.</p>
-                    </div>
-                </div>
-                <div class="flex items-start space-x-3">
-                    <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        <i class="fa-solid fa-chart-simple text-lg"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-slate-200">3. CourseX만의 독점 차별화</h4>
-                        <p class="text-xs text-slate-400 mt-1"><strong class="text-emerald-300">주식 호가창 UI</strong> 및 <strong class="text-emerald-300">신호등(🟢/🟡/🔴) 실시간 확률 예측 알고리즘</strong>으로 완벽한 투명성을 제공합니다.</p>
-                    </div>
+                    <p class="text-[10px] text-slate-400 mt-2 text-center md:text-right">과목당 최대 할당 가능: <strong class="text-amber-300">1,000 M</strong></p>
                 </div>
             </div>
         </div>
 
-        <!-- Dashboard Layout Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Tabs Bar -->
+        <div class="border-b border-slate-200 mb-6 bg-white rounded-xl shadow-sm p-1.5 flex flex-wrap gap-1">
+            <button onclick="switchTab('wishlist')" id="tabBtn-wishlist" class="tab-btn flex-1 min-w-[120px] py-2.5 px-4 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 bg-blue-700 text-white shadow-sm">
+                <i data-lucide="star" class="w-4 h-4"></i>
+                <span>희망 강좌 목록</span>
+                <span id="wishlistBadge" class="bg-white/20 text-white text-[11px] px-1.5 py-0.5 rounded-full font-bold ml-1">0</span>
+            </button>
+            <button onclick="switchTab('allCourses')" id="tabBtn-allCourses" class="tab-btn flex-1 min-w-[120px] py-2.5 px-4 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
+                <i data-lucide="book-open" class="w-4 h-4"></i>
+                <span>개설 강좌 목록</span>
+            </button>
+            <button onclick="switchTab('allocation')" id="tabBtn-allocation" class="tab-btn flex-1 min-w-[120px] py-2.5 px-4 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
+                <i data-lucide="list-checks" class="w-4 h-4"></i>
+                <span>할당 내역</span>
+                <span id="allocationBadge" class="bg-slate-200 text-slate-700 text-[11px] px-1.5 py-0.5 rounded-full font-bold ml-1">0</span>
+            </button>
+            <button onclick="switchTab('wallet')" id="tabBtn-wallet" class="tab-btn flex-1 min-w-[120px] py-2.5 px-4 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
+                <i data-lucide="wallet" class="w-4 h-4"></i>
+                <span>마일리지 지갑</span>
+            </button>
+        </div>
 
-            <!-- Left Panel: Course Selection & Student Profile Controls (4 cols) -->
-            <div class="lg:col-span-4 space-y-6">
-                <!-- Course Selector Card -->
-                <div class="bg-cardbg border border-bordercolor rounded-2xl p-5 shadow-xl">
-                    <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center">
-                        <i class="fa-solid fa-book-bookmark text-indigo-400 mr-2"></i> 과목 선택
-                    </h3>
-                    <select id="courseSelect" onchange="runSimulation()" class="w-full bg-slate-900 border border-bordercolor rounded-xl px-4 py-3 text-sm font-medium text-slate-100 focus:outline-none focus:border-indigo-500 transition">
-                        <option value="CS101">CS101 - 컴퓨터프로그래밍 (정원: 40명)</option>
-                        <option value="BA201">BA201 - 경영학개론 (정원: 60명)</option>
-                        <option value="AI301">AI301 - 인공지능과 딥러닝 (정원: 30명)</option>
-                        <option value="EC102">EC102 - 경제학원론 (정원: 80명)</option>
-                    </select>
+        <!-- Tab 1: Wishlist Courses -->
+        <div id="tab-wishlist" class="tab-content active">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span>희망 강좌 목록 및 마일리지 베팅</span>
+                    </h2>
+                    <p class="text-xs text-slate-500">개설 강좌에서 선택한 관심 과목에 마일리지를 할당(베팅)하세요.</p>
+                </div>
+                <div class="text-right">
+                    <button onclick="switchTab('allCourses')" class="text-xs text-blue-600 font-semibold hover:underline flex items-center gap-1">
+                        + 과목 더 추가하기
+                    </button>
+                </div>
+            </div>
 
-                    <div class="mt-4 pt-4 border-t border-slate-800 space-y-2 text-xs text-slate-400">
-                        <div class="flex justify-between">
-                            <span>담당 교수:</span> <span id="profName" class="font-semibold text-slate-200">김연세 교수</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>총 수강 정원:</span> <span id="courseCap" class="font-semibold text-slate-200">40 명</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>현재 베팅 인원:</span> <span id="courseBids" class="font-semibold text-indigo-400">68 명 (경쟁률 1.7:1)</span>
+            <!-- Wishlist Empty State -->
+            <div id="wishlistEmpty" class="hidden bg-white border border-dashed border-slate-300 rounded-2xl p-12 text-center">
+                <i data-lucide="bookmark-plus" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+                <h3 class="text-slate-700 font-bold">희망 강좌가 없습니다</h3>
+                <p class="text-slate-500 text-xs mt-1 mb-4">'개설 강좌 목록' 탭에서 원하는 강좌의 ⭐ 버튼을 눌러 희망 강좌로 등록하세요.</p>
+                <button onclick="switchTab('allCourses')" class="px-4 py-2 bg-blue-700 text-white rounded-lg text-xs font-semibold hover:bg-blue-800 transition">
+                    개설 강좌 목록 보기
+                </button>
+            </div>
+
+            <!-- Wishlist Table / Cards Grid -->
+            <div id="wishlistList" class="space-y-4">
+                <!-- Dynamically Populated -->
+            </div>
+        </div>
+
+        <!-- Tab 2: All Offered Courses -->
+        <div id="tab-allCourses" class="tab-content">
+            <!-- Filter & Search Bar -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 mb-4 shadow-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">강의명 / 과목코드 / 교수명 검색</label>
+                        <div class="relative">
+                            <input type="text" id="courseSearchInput" onkeyup="filterCourses()" placeholder="예: 인공지능, CSE3101, 홍길동" class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
                         </div>
                     </div>
-                </div>
 
-                <!-- Interactive User Mileage Slider & Profile Panel -->
-                <div class="bg-cardbg border border-bordercolor rounded-2xl p-5 shadow-xl space-y-5">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center">
-                            <i class="fa-solid fa-sliders text-indigo-400 mr-2"></i> 내 마일리지 베팅 설정
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">이수구분 카테고리</label>
+                        <select id="categoryFilter" onchange="filterCourses()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500">
+                            <option value="ALL">전체 이수구분</option>
+                            <option value="전공필수">전공필수</option>
+                            <option value="전공선택">전공선택</option>
+                            <option value="교양필수">교양필수</option>
+                            <option value="교양선택">교양선택</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">개설 학과</label>
+                        <select id="deptFilter" onchange="filterCourses()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-blue-500">
+                            <option value="ALL">전체 개설학과</option>
+                            <option value="컴퓨터공학과">컴퓨터공학과</option>
+                            <option value="경영학과">경영학과</option>
+                            <option value="전자공학과">전자공학과</option>
+                            <option value="교양학부">교양학부</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Courses Table -->
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 border-b border-slate-200 font-semibold">
+                                <th class="p-3 text-center w-12">관심</th>
+                                <th class="p-3">학수번호</th>
+                                <th class="p-3">구분</th>
+                                <th class="p-3">교과목명</th>
+                                <th class="p-3">개설학과</th>
+                                <th class="p-3 text-center">학점</th>
+                                <th class="p-3">담당교수</th>
+                                <th class="p-3">강의시간/장소</th>
+                                <th class="p-3 text-center">정원</th>
+                                <th class="p-3 text-center">신청인원</th>
+                                <th class="p-3 text-center">작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="courseTableBody" class="divide-y divide-slate-100">
+                            <!-- Dynamically generated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Allocation History -->
+        <div id="tab-allocation" class="tab-content">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">현재 마일리지 할당 내역</h2>
+                    <p class="text-xs text-slate-500">현재까지 마일리지를 입력 및 제출한 강좌들의 최종 내역입니다.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 border-b border-slate-200 font-semibold">
+                                <th class="p-3">학수번호</th>
+                                <th class="p-3">강의명</th>
+                                <th class="p-3">구분</th>
+                                <th class="p-3 text-center">학점</th>
+                                <th class="p-3">개설학과</th>
+                                <th class="p-3 text-right">할당 마일리지</th>
+                                <th class="p-3 text-center">점유율 (1000M 대비)</th>
+                                <th class="p-3 text-center">예상 Cutoff</th>
+                                <th class="p-3 text-center">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allocationTableBody" class="divide-y divide-slate-100">
+                            <!-- Dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="allocationEmpty" class="p-8 text-center text-slate-400 hidden">
+                    할당된 마일리지가 없습니다. 희망 강좌 목록에서 마일리지를 할당하세요.
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Mileage Wallet -->
+        <div id="tab-wallet" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left Column: Mileage Cards & Breakdown -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <i data-lucide="wallet" class="w-5 h-5 text-indigo-600"></i>
+                            <span>마일리지 지갑 상세 현황</span>
                         </h3>
-                        <span id="mileageBadge" class="text-lg font-black text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 px-3 py-1 rounded-xl">
-                            18 Pt
-                        </span>
+
+                        <!-- Progress Bar Visualizer -->
+                        <div class="mb-6">
+                            <div class="flex justify-between text-xs font-semibold mb-2">
+                                <span>사용된 마일리지 (<span id="walletUsedPct">0</span>%)</span>
+                                <span class="text-slate-500"><span id="walletUsed">0</span> / <span id="walletTotal">1800</span> M</span>
+                            </div>
+                            <div class="w-full h-4 bg-slate-100 rounded-full overflow-hidden flex p-0.5 border border-slate-200">
+                                <div id="walletProgressBar" class="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Grid Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                <span class="text-xs text-blue-600 font-semibold block mb-1">총 부여 마일리지</span>
+                                <span id="walletCardTotal" class="text-2xl font-black text-blue-900">1,800 M</span>
+                                <p class="text-[10px] text-blue-700/70 mt-1">1학점당 100M 기준 산출</p>
+                            </div>
+                            <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                                <span class="text-xs text-amber-600 font-semibold block mb-1">현재 잔여 마일리지</span>
+                                <span id="walletCardRemain" class="text-2xl font-black text-amber-800">1,800 M</span>
+                                <p class="text-[10px] text-amber-700/70 mt-1">할당 가능한 최대 한도</p>
+                            </div>
+                            <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                                <span class="text-xs text-emerald-600 font-semibold block mb-1">할당 완료 과목 수</span>
+                                <span id="walletCardCount" class="text-2xl font-black text-emerald-800">0 과목</span>
+                                <p class="text-[10px] text-emerald-700/70 mt-1">희망 강좌 베팅 완료</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Mileage Slider -->
-                    <div>
-                        <input type="range" id="mileageRange" min="1" max="36" value="18" oninput="updateMileageLabel(this.value); runSimulation();" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
-                        <div class="flex justify-between text-[11px] text-slate-500 mt-1 font-medium">
-                            <span>최저 1 Pt</span>
-                            <span>평균 18 Pt</span>
-                            <span>최대 36 Pt</span>
-                        </div>
-                    </div>
-
-                    <!-- Student Priority Factors (Yonsei Tie-breaker Simulation) -->
-                    <div class="pt-4 border-t border-slate-800 space-y-3">
-                        <h4 class="text-xs font-bold text-slate-400">동점자 처리용 가산점 프로필</h4>
-
-                        <div class="flex items-center justify-between text-xs">
-                            <label class="text-slate-300 flex items-center cursor-pointer">
-                                <input type="checkbox" id="isMajor" checked onchange="runSimulation()" class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500 mr-2 w-4 h-4">
-                                전공/필수 여부 (가산점 +50)
-                            </label>
-                        </div>
-
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-xs text-slate-400">
-                                <span>이수 학점 비율 (졸업요건 대비)</span>
-                                <span id="creditRatioVal" class="text-slate-200 font-semibold">75%</span>
-                            </div>
-                            <input type="range" id="creditRatio" min="0.1" max="1.0" step="0.05" value="0.75" oninput="document.getElementById('creditRatioVal').innerText=Math.round(this.value*100)+'%'; runSimulation();" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
-                        </div>
-
-                        <div class="space-y-1">
-                            <div class="flex justify-between text-xs text-slate-400">
-                                <span>직전학기 평점 (GPA)</span>
-                                <span id="gpaVal" class="text-slate-200 font-semibold">3.8 / 4.3</span>
-                            </div>
-                            <input type="range" id="gpa" min="2.0" max="4.3" step="0.1" value="3.8" oninput="document.getElementById('gpaVal').innerText=this.value+' / 4.3'; runSimulation();" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                    <!-- Mileage Allocation Itemized List -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h4 class="text-sm font-bold text-slate-800 mb-3">과목별 마일리지 배분 비율</h4>
+                        <div id="walletBreakdownList" class="space-y-3">
+                            <!-- Populated dynamically -->
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Right Panel: Real-Time Traffic Light & Order Book Visualization (8 cols) -->
-            <div class="lg:col-span-8 space-y-6">
-
-                <!-- Real-Time Traffic Light Status Card -->
-                <div id="trafficCard" class="bg-cardbg border border-bordercolor rounded-2xl p-6 shadow-xl transition-all duration-300 relative overflow-hidden">
-                    <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-                        
-                        <!-- Traffic Light Indicator Badge -->
-                        <div class="flex items-center space-x-5 w-full md:w-auto">
-                            <div class="relative flex items-center justify-center">
-                                <div id="lightBg" class="w-20 h-20 rounded-2xl bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center glow-green transition-all">
-                                    <i id="lightIcon" class="fa-solid fa-circle-check text-4xl text-emerald-400"></i>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="text-xs font-semibold text-slate-400 uppercase tracking-widest">실시간 합격 예측 지표</div>
-                                <div id="statusLabel" class="text-2xl font-black text-emerald-400 mt-0.5">합격 유력 (안전)</div>
-                                <p id="rankInfo" class="text-xs text-slate-300 mt-1">예상 석차: <strong class="text-indigo-400">14위</strong> / 정원 40명</p>
-                            </div>
-                        </div>
-
-                        <!-- Probability Gauge & Cutoff Stats -->
-                        <div class="flex items-center space-x-6 w-full md:w-auto justify-around border-t md:border-t-0 md:border-l border-slate-800 pt-4 md:pt-0 md:pl-6">
-                            <div class="text-center">
-                                <span class="text-xs text-slate-400 block">합격 예측 확률</span>
-                                <span id="probVal" class="text-3xl font-extrabold text-slate-100">88<span class="text-lg text-slate-400">%</span></span>
-                            </div>
-                            <div class="text-center">
-                                <span class="text-xs text-slate-400 block">예상 컷오프</span>
-                                <span id="cutoffVal" class="text-3xl font-extrabold text-amber-400">16<span class="text-sm font-normal text-slate-400"> Pt</span></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Strategic Advice Bar -->
-                    <div class="mt-5 pt-4 border-t border-slate-800/80 flex items-start space-x-3 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
-                        <i class="fa-solid fa-robot text-indigo-400 mt-0.5 text-sm"></i>
-                        <p id="recommendationText" class="text-xs text-slate-300 leading-relaxed">
-                            현재 매우 안정권입니다. 여유 마일리지 1~2점을 타 과목에 배분하는 전략을 고려하세요.
+                <!-- Right Column: Rules & Priority Guide -->
+                <div class="space-y-6">
+                    <div class="bg-slate-900 text-slate-100 p-6 rounded-2xl shadow-md border border-slate-800">
+                        <h3 class="text-base font-bold text-white mb-3 flex items-center gap-2">
+                            <i data-lucide="shield-alert" class="w-5 h-5 text-amber-400"></i>
+                            <span>수강권 분배 우선순위 규정</span>
+                        </h3>
+                        <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                            수강신청 기간이 종료되면 과목 정원을 초과한 경우 아래의 4단계 순위에 따라 수강권이 자동 배분됩니다.
                         </p>
+
+                        <ol class="space-y-3 text-xs">
+                            <li class="flex items-start gap-2.5 p-2.5 bg-slate-800/80 rounded-lg border border-slate-700">
+                                <span class="bg-blue-600 text-white font-black rounded-full w-5 h-5 flex items-center justify-center shrink-0 text-[10px]">1</span>
+                                <div>
+                                    <strong class="text-blue-300 block">마일리지 높은 순</strong>
+                                    <span class="text-slate-400 text-[11px]">해당 과목에 할당한 마일리지 절대값이 큰 학생 우선. (한 과목 최대 1,000M)</span>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-2.5 p-2.5 bg-slate-800/80 rounded-lg border border-slate-700">
+                                <span class="bg-indigo-600 text-white font-black rounded-full w-5 h-5 flex items-center justify-center shrink-0 text-[10px]">2</span>
+                                <div>
+                                    <strong class="text-indigo-300 block">전공 여부 (개설학과 전공생)</strong>
+                                    <span class="text-slate-400 text-[11px]">개설학과 전공생 우대. (단, 교양 과목은 전공 가산점 없음)</span>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-2.5 p-2.5 bg-slate-800/80 rounded-lg border border-slate-700">
+                                <span class="bg-purple-600 text-white font-black rounded-full w-5 h-5 flex items-center justify-center shrink-0 text-[10px]">3</span>
+                                <div>
+                                    <strong class="text-purple-300 block">학년 (졸업 임박 순)</strong>
+                                    <span class="text-slate-400 text-[11px]">4학년 > 3학년 > 2학년 > 1학년. <br>⚡ <strong>단, 조기졸업 신청자는 학년 불문 최우선 순위 적용</strong></span>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-2.5 p-2.5 bg-slate-800/80 rounded-lg border border-slate-700">
+                                <span class="bg-slate-600 text-white font-black rounded-full w-5 h-5 flex items-center justify-center shrink-0 text-[10px]">4</span>
+                                <div>
+                                    <strong class="text-slate-300 block">랜덤 추첨</strong>
+                                    <span class="text-slate-400 text-[11px]">동점자 발생 시 남은 정원 범위 내에서 무작위 추첨</span>
+                                </div>
+                            </li>
+                        </ol>
                     </div>
                 </div>
-
-                <!-- Order Book (주식 호가창) Visualization Panel -->
-                <div class="bg-cardbg border border-bordercolor rounded-2xl p-5 shadow-xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center">
-                                <i class="fa-solid fa-[#10B981] fa-arrow-trend-up text-emerald-400 mr-2"></i> 실시간 수강 호가창 (Order Book Depth)
-                            </h3>
-                            <p class="text-xs text-slate-400">마일리지 구간별 신청자 수와 수강정원 컷오프 수평선의 실시간 분포입니다.</p>
-                        </div>
-                        <div class="flex items-center space-x-3 text-xs">
-                            <span class="flex items-center"><span class="w-2.5 h-2.5 bg-indigo-500 rounded mr-1.5"></span> 신청자 분포</span>
-                            <span class="flex items-center"><span class="w-2.5 h-2.5 bg-emerald-400 rounded mr-1.5"></span> 내 위치</span>
-                            <span class="flex items-center"><span class="w-2.5 h-2.5 bg-rose-500 rounded mr-1.5"></span> 컷오프 경계</span>
-                        </div>
-                    </div>
-
-                    <!-- Order Book Table & Depth Bar UI -->
-                    <div class="overflow-y-auto max-h-[380px] custom-scrollbar border border-slate-800 rounded-xl">
-                        <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-900/90 text-slate-400 sticky top-0 z-10 border-b border-slate-800">
-                                <tr>
-                                    <th class="py-2.5 px-3">마일리지 (Pt)</th>
-                                    <th class="py-2.5 px-3">구간 인원</th>
-                                    <th class="py-2.5 px-3">누적 인원</th>
-                                    <th class="py-2.5 px-3 w-1/2">누적 비율 & 수강정원 경계</th>
-                                </tr>
-                            </thead>
-                            <tbody id="orderBookBody" class="divide-y divide-slate-800/60 font-mono">
-                                <!-- Dynamic Order Book Rows populated via JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
             </div>
         </div>
+
     </main>
 
-    <!-- Pitch Modal Dialog -->
-    <div id="pitchModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-cardbg border border-indigo-500/40 rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl relative">
-            <button onclick="togglePitchModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-            <div class="flex items-center space-x-3">
-                <div class="p-2.5 rounded-xl bg-indigo-500/20 text-indigo-400">
-                    <i class="fa-solid fa-trophy text-xl"></i>
+    <!-- Simulation Results Modal -->
+    <div id="resultsModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+            <div class="bg-indigo-900 text-white p-5 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-bold flex items-center gap-2">
+                        <i data-lucide="award" class="w-6 h-6 text-amber-400"></i>
+                        <span id="resultsModalTitle">1차 수강신청 결과 산출 완료</span>
+                    </h3>
+                    <p class="text-xs text-indigo-200 mt-0.5">우선순위 산출 로직(마일리지 > 전공 > 학년/조기졸업 > 추첨) 결과입니다.</p>
                 </div>
-                <h3 class="text-lg font-bold text-slate-100">해커톤 심사위원용 발표 (Pitching Strategy)</h3>
+                <button onclick="closeResultsModal()" class="p-1 hover:bg-indigo-800 rounded text-slate-300 hover:text-white">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
             </div>
-            <div class="space-y-3 text-xs leading-relaxed text-slate-300 border-t border-slate-800 pt-4">
-                <p><strong class="text-indigo-400">Q. 왜 연세대학교 모델인가요?</strong><br>
-                연세대학교의 마일리지 수강신청은 0.001초 클릭 싸움 대신 수일간의 전략 입찰로 변경하여 <span class="text-emerald-400">동시 접속 트래픽 병목 현상을 90% 이상 완화</span>한 검증된 트래픽 분산 모델입니다.</p>
 
-                <p><strong class="text-amber-400">Q. 기존 시스템과의 차별화 포인트(CourseX의 개선점)는 무엇인가요?</strong><br>
-                기존 연세대 시스템은 동점자 기준이 너무 복잡하여 학생들이 합격 여부를 예측할 수 없는 '깜깜이' 단점이 있습니다. CourseX는 <span class="text-emerald-400">주식 호가창(Order Book) 실시간 시각화</span>와 <span class="text-emerald-400">신호등 UI 기반 합격 확률 알고리즘</span>을 탑재하여 완벽한 투명성과 사용자 경험을 선사합니다.</p>
+            <div class="p-6 overflow-y-auto space-y-6 flex-grow">
+                <!-- Summary Result Banner -->
+                <div id="resultsSummaryBanner" class="p-4 rounded-xl bg-slate-100 border border-slate-200">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <!-- Course Status Detail Accordion/List -->
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800 mb-3">과목별 신청 및 수강 확정 결과</h4>
+                    <div id="resultsCourseList" class="space-y-4">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
             </div>
-            <div class="pt-3 flex justify-end">
-                <button onclick="togglePitchModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold">확인했습니다</button>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                <div class="text-xs text-slate-500">
+                    미달된 과목은 <strong class="text-indigo-600">2차 수강신청(잔여 정원)</strong>으로 이월됩니다.
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="closeResultsModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg text-xs">
+                        닫기
+                    </button>
+                    <button id="startSecondRoundBtn" onclick="startSecondRound()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-xs flex items-center gap-1.5">
+                        <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+                        <span>2차 수강신청 시작하기</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-auto text-center text-xs text-slate-400">
+        <p>© 2026 한국대학교 마일리지 수강신청 시스템 시뮬레이터. All rights reserved.</p>
+    </footer>
+
     <script>
-        let currentCourseId = 'CS101';
+        // Core Application State
+        let currentUser = null;
+        let wishlist = []; // Array of course codes
+        let bids = {};     // { courseCode: allocatedMileage }
+        let isBlindMode = false;
+        let currentRound = 1; // 1: 1차 수강신청, 2: 1차 마감/결과표시, 3: 2차 수강신청
+        let timerSeconds = 9000; // 2시간 30분 (9000초)
+        let timerInterval = null;
 
-        function updateMileageLabel(val) {
-            document.getElementById('mileageBadge').innerText = val + ' Pt';
+        // Sample Offered Courses Data
+        const initialCourses = [
+            { code: 'CSE3101', name: '인공지능 및 딥러닝', dept: '컴퓨터공학과', category: '전공필수', credit: 3, professor: '김철수', time: '월1,2,3 / 수1,2', room: '공학관 301호', capacity: 30, applicantsCount: 48, baseCutoff: 620 },
+            { code: 'CSE4102', name: '클라우드 컴퓨팅 특론', dept: '컴퓨터공학과', category: '전공선택', credit: 3, professor: '이영희', time: '화4,5,6', room: '공학관 502호', capacity: 25, applicantsCount: 20, baseCutoff: 300 },
+            { code: 'MGT2101', name: '마케팅 원론', dept: '경영학과', category: '전공필수', credit: 3, professor: '박경영', time: '목1,2,3', room: '경영관 101호', capacity: 40, applicantsCount: 65, baseCutoff: 750 },
+            { code: 'MGT3205', name: '재무관리', dept: '경영학과', category: '전공선택', credit: 3, professor: '최금융', time: '수4,5,6', room: '경영관 204호', capacity: 35, applicantsCount: 32, baseCutoff: 410 },
+            { code: 'EEE2001', name: '회로이론 I', dept: '전자공학과', category: '전공필수', credit: 3, professor: '정회로', time: '월4,5 / 금2,3', room: '제3공학관 201호', capacity: 45, applicantsCount: 40, baseCutoff: 250 },
+            { code: 'GEL1001', name: '서양사 산책', dept: '교양학부', category: '교양선택', credit: 2, professor: '강역사', time: '금1,2,3', room: '위당관 105호', capacity: 60, applicantsCount: 92, baseCutoff: 880 },
+            { code: 'GEL1005', name: '글로벌 리더십과 윤리', dept: '교양학부', category: '교양필수', credit: 2, professor: '윤리선', time: '수7,8', room: '백양관 302호', capacity: 50, applicantsCount: 45, baseCutoff: 180 },
+            { code: 'KOR2003', name: '현대 소설의 이해', dept: '국어국문학과', category: '전공선택', credit: 3, professor: '한문학', time: '화1,2,3', room: '외솔관 202호', capacity: 30, applicantsCount: 18, baseCutoff: 100 }
+        ];
+
+        let courses = JSON.parse(JSON.stringify(initialCourses));
+        let round1Results = null; // Stored results after processing 1st round
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            startCountdown();
+
+            // Login Form Handler
+            document.getElementById('loginForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                login();
+            });
+        });
+
+        // Countdown Timer Logic
+        function startCountdown() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (timerSeconds > 0) {
+                    timerSeconds--;
+                    updateTimerDisplay();
+
+                    // Auto blind trigger when under 1 hour (3600s)
+                    if (timerSeconds <= 3600 && !isBlindMode && currentRound === 1) {
+                        isBlindMode = true;
+                        updateBlindUI();
+                    }
+                }
+            }, 1000);
         }
 
-        function togglePitchModal() {
-            const modal = document.getElementById('pitchModal');
-            modal.classList.toggle('hidden');
+        function updateTimerDisplay() {
+            const h = Math.floor(timerSeconds / 3600).toString().padStart(2, '0');
+            const m = Math.floor((timerSeconds % 3600) / 60).toString().padStart(2, '0');
+            const s = (timerSeconds % 60).toString().padStart(2, '0');
+            const timerEl = document.getElementById('countdownTimer');
+            if (timerEl) timerEl.innerText = `${h}:${m}:${s}`;
         }
 
-        async function runSimulation() {
-            const courseSelect = document.getElementById('courseSelect');
-            const courseId = courseSelect.value;
-            const mileage = document.getElementById('mileageRange').value;
-            const isMajor = document.getElementById('isMajor').checked;
-            const creditRatio = document.getElementById('creditRatio').value;
-            const gpa = document.getElementById('gpa').value;
+        function toggleBlindModeSim() {
+            isBlindMode = !isBlindMode;
+            updateBlindUI();
+            renderWishlist();
+            renderAllocationTable();
+        }
 
-            try {
-                // 백엔드 API 호출 (실시간 컷오프 및 호가창 계산)
-                const response = await fetch('/api/simulate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        course_id: courseId,
-                        mileage: parseInt(mileage),
-                        is_major: isMajor,
-                        credit_ratio: parseFloat(creditRatio),
-                        gpa: parseFloat(gpa)
-                    })
+        function updateBlindUI() {
+            const btnText = document.getElementById('blindBtnText');
+            const banner = document.getElementById('blindBanner');
+            const bannerText = document.getElementById('blindBannerText');
+
+            if (isBlindMode) {
+                if (btnText) btnText.innerText = "블라인드 해제 (시뮬)";
+                if (banner) {
+                    banner.className = "bg-rose-500/20 text-rose-300 border border-rose-500/40 px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 w-full justify-center md:justify-end animate-pulse";
+                }
+                if (bannerText) bannerText.innerText = "🔒 1시간 전: Cutoff 블라인드";
+            } else {
+                if (btnText) btnText.innerText = "블라인드 시뮬레이션";
+                if (banner) {
+                    banner.className = "bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 w-full justify-center md:justify-end";
+                }
+                if (bannerText) bannerText.innerText = "실시간 Cutoff 공개 중";
+            }
+        }
+
+        function login() {
+            const school = document.getElementById('loginSchool').value;
+            const studentId = document.getElementById('loginStudentId').value;
+            const name = document.getElementById('loginName').value;
+            const major = document.getElementById('loginMajor').value;
+            const grade = parseInt(document.getElementById('loginGrade').value);
+            const isEarlyGrad = document.getElementById('loginEarlyGrad').checked;
+            const maxCredit = parseInt(document.getElementById('loginMaxCredit').value);
+
+            const totalMileage = maxCredit * 100;
+
+            currentUser = {
+                school,
+                studentId,
+                name,
+                major,
+                grade,
+                isEarlyGrad,
+                maxCredit,
+                totalMileage
+            };
+
+            // Set Header and Overview Stats
+            document.getElementById('userSchoolName').innerText = school;
+            document.getElementById('headerUserName').innerText = `${name} (${studentId})`;
+            document.getElementById('headerUserDetail').innerText = `${major} | ${grade}학년 ${isEarlyGrad ? '⚡[조기졸업]' : ''}`;
+            document.getElementById('mobileUserDetail').innerText = `${major} ${grade}학년`;
+            
+            document.getElementById('overviewTotalMileage').innerText = totalMileage.toLocaleString();
+            document.getElementById('creditFormulaText').innerText = `최대 ${maxCredit}학점 × 100마일리지`;
+
+            // Default Wishlist Setup
+            wishlist = ['CSE3101', 'MGT2101', 'GEL1001'];
+            bids = {
+                'CSE3101': 700,
+                'MGT2101': 500
+            };
+
+            // Hide Login Modal & Show Content
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('mainHeader').classList.remove('hidden');
+            document.getElementById('appContent').classList.remove('hidden');
+
+            // Initial Render
+            updateOverviewStats();
+            renderWishlist();
+            renderAllCoursesTable();
+            renderAllocationTable();
+            renderWalletTab();
+            lucide.createIcons();
+        }
+
+        function logout() {
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('mainHeader').classList.add('hidden');
+            document.getElementById('appContent').classList.add('hidden');
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-700', 'text-white', 'shadow-sm');
+                btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+            });
+
+            const activeContent = document.getElementById(`tab-${tabId}`);
+            const activeBtn = document.getElementById(`tabBtn-${tabId}`);
+
+            if (activeContent) activeContent.classList.add('active');
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+                activeBtn.classList.add('bg-blue-700', 'text-white', 'shadow-sm');
+            }
+
+            if (tabId === 'wallet') renderWalletTab();
+            if (tabId === 'allocation') renderAllocationTable();
+            if (tabId === 'wishlist') renderWishlist();
+        }
+
+        function updateOverviewStats() {
+            if (!currentUser) return;
+
+            let totalAllocated = 0;
+            let totalAppliedCredits = 0;
+            let appliedCount = 0;
+
+            Object.keys(bids).forEach(code => {
+                const val = bids[code] || 0;
+                if (val > 0) {
+                    totalAllocated += val;
+                    appliedCount++;
+                    const c = courses.find(item => item.code === code);
+                    if (c) totalAppliedCredits += c.credit;
+                }
+            });
+
+            const remaining = currentUser.totalMileage - totalAllocated;
+
+            document.getElementById('overviewRemainingMileage').innerText = remaining.toLocaleString();
+            document.getElementById('overviewAllocatedMileage').innerText = totalAllocated.toLocaleString();
+            document.getElementById('overviewAppliedCount').innerText = appliedCount;
+            document.getElementById('overviewAllocatedCredits').innerText = totalAppliedCredits;
+
+            document.getElementById('wishlistBadge').innerText = wishlist.length;
+            document.getElementById('allocationBadge').innerText = appliedCount;
+
+            return { remaining, totalAllocated, totalAppliedCredits, appliedCount };
+        }
+
+        function renderWishlist() {
+            const container = document.getElementById('wishlistList');
+            const emptyEl = document.getElementById('wishlistEmpty');
+
+            if (wishlist.length === 0) {
+                container.innerHTML = '';
+                emptyEl.classList.remove('hidden');
+                return;
+            } else {
+                emptyEl.classList.add('hidden');
+            }
+
+            const { remaining } = updateOverviewStats();
+
+            let html = '';
+            wishlist.forEach(code => {
+                const course = courses.find(c => c.code === code);
+                if (!course) return;
+
+                const currentBid = bids[code] || 0;
+                const isMajorMatch = (currentUser.major === course.dept && course.category !== '교양선택' && course.category !== '교양필수');
+
+                // Estimated Cutoff display
+                let cutoffDisplay = `${course.baseCutoff} M`;
+                let cutoffClass = "text-amber-600 bg-amber-50 border-amber-200";
+
+                if (isBlindMode) {
+                    cutoffDisplay = "🔒 블라인드 처리됨";
+                    cutoffClass = "text-slate-500 bg-slate-100 border-slate-200";
+                } else if (currentBid >= course.baseCutoff && currentBid > 0) {
+                    cutoffClass = "text-emerald-700 bg-emerald-50 border-emerald-200";
+                } else if (currentBid > 0) {
+                    cutoffClass = "text-rose-700 bg-rose-50 border-rose-200";
+                }
+
+                html += `
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        
+                        <!-- Left Info -->
+                        <div class="flex-grow space-y-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${course.code}</span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${course.category.includes('전공') ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">${course.category}</span>
+                                ${isMajorMatch ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">★ 본인전공 우대</span>' : ''}
+                            </div>
+                            <h3 class="text-base font-bold text-slate-900">${course.name}</h3>
+                            <div class="text-xs text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
+                                <span><i data-lucide="building" class="w-3.5 h-3.5 inline text-slate-400"></i> ${course.dept}</span>
+                                <span><i data-lucide="user" class="w-3.5 h-3.5 inline text-slate-400"></i> ${course.professor} 교수</span>
+                                <span><i data-lucide="award" class="w-3.5 h-3.5 inline text-slate-400"></i> ${course.credit}학점</span>
+                                <span><i data-lucide="clock" class="w-3.5 h-3.5 inline text-slate-400"></i> ${course.time} (${course.room})</span>
+                            </div>
+                        </div>
+
+                        <!-- Mid Status (Quota & Cutoff) -->
+                        <div class="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100 shrink-0">
+                            <div class="text-center px-2">
+                                <span class="text-[10px] text-slate-400 block font-semibold">정원 / 신청인원</span>
+                                <span class="text-xs font-bold text-slate-800">${course.capacity} / <span class="text-blue-600">${course.applicantsCount}명</span></span>
+                            </div>
+                            <div class="h-8 w-px bg-slate-200"></div>
+                            <div class="text-center px-2">
+                                <span class="text-[10px] text-slate-400 block font-semibold">실시간 예상 컷오프</span>
+                                <span class="text-xs font-bold px-2 py-0.5 rounded border ${cutoffClass}">${cutoffDisplay}</span>
+                            </div>
+                        </div>
+
+                        <!-- Right Mileage Bidding Input Block -->
+                        <div class="flex items-center gap-2 shrink-0 bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100">
+                            <div class="flex flex-col">
+                                <label class="text-[10px] font-semibold text-indigo-900 mb-1">할당 마일리지 (최대 1000M)</label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="number" id="bidInput-${course.code}" min="0" max="1000" value="${currentBid}" 
+                                        class="w-28 px-3 py-1.5 border border-indigo-200 rounded-lg text-sm font-bold text-indigo-950 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                                        placeholder="0 ~ 1000">
+                                    <span class="text-xs font-bold text-indigo-700">M</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col gap-1 self-end">
+                                <button onclick="saveBid('${course.code}')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+                                    할당 저장
+                                </button>
+                                <button onclick="removeFromWishlist('${course.code}')" class="text-[11px] text-slate-400 hover:text-rose-600 text-center">
+                                    삭제
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function saveBid(code) {
+            const inputEl = document.getElementById(`bidInput-${code}`);
+            if (!inputEl) return;
+
+            let value = parseInt(inputEl.value) || 0;
+
+            if (value < 0) {
+                alert("마일리지는 0 이상이어야 합니다.");
+                return;
+            }
+
+            if (value > 1000) {
+                alert("한 과목에 할당할 수 있는 최대 마일리지는 1,000 M 입니다.");
+                inputEl.value = 1000;
+                value = 1000;
+            }
+
+            // Calculate current balance excluding this course
+            let currentSpentExceptThis = 0;
+            Object.keys(bids).forEach(cKey => {
+                if (cKey !== code) currentSpentExceptThis += (bids[cKey] || 0);
+            });
+
+            if (currentSpentExceptThis + value > currentUser.totalMileage) {
+                const maxAvailable = currentUser.totalMileage - currentSpentExceptThis;
+                alert(`잔여 마일리지가 부족합니다. (최대 할당 가능: ${maxAvailable} M)`);
+                inputEl.value = maxAvailable;
+                bids[code] = maxAvailable;
+            } else {
+                bids[code] = value;
+                alert(`[${code}] 마일리지 ${value} M 할당이 저장되었습니다.`);
+            }
+
+            updateOverviewStats();
+            renderWishlist();
+            renderAllocationTable();
+            renderWalletTab();
+        }
+
+        function removeFromWishlist(code) {
+            wishlist = wishlist.filter(c => c !== code);
+            delete bids[code];
+            updateOverviewStats();
+            renderWishlist();
+            renderAllCoursesTable();
+            renderAllocationTable();
+        }
+
+        function toggleWishlist(code) {
+            if (wishlist.includes(code)) {
+                removeFromWishlist(code);
+            } else {
+                wishlist.push(code);
+                bids[code] = bids[code] || 0;
+                updateOverviewStats();
+                renderWishlist();
+                renderAllCoursesTable();
+            }
+        }
+
+        function renderAllCoursesTable() {
+            const tbody = document.getElementById('courseTableBody');
+            if (!tbody) return;
+
+            let html = '';
+            courses.forEach(c => {
+                const isWish = wishlist.includes(c.code);
+                const isMajorMatch = (currentUser && currentUser.major === c.dept && !c.category.includes('교양'));
+
+                html += `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3 text-center">
+                        <button onclick="toggleWishlist('${c.code}')" class="text-slate-400 hover:text-amber-500 transition">
+                            <i data-lucide="star" class="w-4 h-4 ${isWish ? 'fill-amber-400 text-amber-400' : ''}"></i>
+                        </button>
+                    </td>
+                    <td class="p-3 font-mono font-semibold text-slate-700">${c.code}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${c.category.includes('전공') ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
+                            ${c.category}
+                        </span>
+                    </td>
+                    <td class="p-3 font-bold text-slate-900">
+                        ${c.name}
+                        ${isMajorMatch ? '<span class="ml-1 text-[10px] text-indigo-600 font-semibold">[전공우대]</span>' : ''}
+                    </td>
+                    <td class="p-3 text-slate-600">${c.dept}</td>
+                    <td class="p-3 text-center font-semibold">${c.credit}</td>
+                    <td class="p-3 text-slate-700">${c.professor}</td>
+                    <td class="p-3 text-slate-500 text-[11px]">${c.time} <span class="text-slate-400">(${c.room})</span></td>
+                    <td class="p-3 text-center font-semibold text-slate-800">${c.capacity}명</td>
+                    <td class="p-3 text-center font-bold text-blue-600">${c.applicantsCount}명</td>
+                    <td class="p-3 text-center">
+                        <button onclick="toggleWishlist('${c.code}')" class="px-2.5 py-1 rounded text-[11px] font-semibold transition ${isWish ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}">
+                            ${isWish ? '희망 해제' : '+ 희망 담기'}
+                        </button>
+                    </td>
+                </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function filterCourses() {
+            const search = document.getElementById('courseSearchInput').value.toLowerCase();
+            const cat = document.getElementById('categoryFilter').value;
+            const dept = document.getElementById('deptFilter').value;
+
+            const filtered = initialCourses.filter(c => {
+                const matchSearch = c.name.toLowerCase().includes(search) || c.code.toLowerCase().includes(search) || c.professor.toLowerCase().includes(search);
+                const matchCat = (cat === 'ALL' || c.category === cat);
+                const matchDept = (dept === 'ALL' || c.dept === dept);
+                return matchSearch && matchCat && matchDept;
+            });
+
+            courses = filtered;
+            renderAllCoursesTable();
+        }
+
+        function renderAllocationTable() {
+            const tbody = document.getElementById('allocationTableBody');
+            const emptyEl = document.getElementById('allocationEmpty');
+            if (!tbody) return;
+
+            const allocatedCodes = Object.keys(bids).filter(k => bids[k] > 0);
+
+            if (allocatedCodes.length === 0) {
+                tbody.innerHTML = '';
+                emptyEl.classList.remove('hidden');
+                return;
+            } else {
+                emptyEl.classList.add('hidden');
+            }
+
+            let html = '';
+            allocatedCodes.forEach(code => {
+                const c = courses.find(item => item.code === code) || initialCourses.find(item => item.code === code);
+                if (!c) return;
+
+                const val = bids[code];
+                const pct = Math.round((val / 1000) * 100);
+
+                let cutoffDisplay = `${c.baseCutoff} M`;
+                if (isBlindMode) cutoffDisplay = "🔒 블라인드";
+
+                html += `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3 font-mono font-semibold text-slate-700">${c.code}</td>
+                    <td class="p-3 font-bold text-slate-900">${c.name}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${c.category.includes('전공') ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}">
+                            ${c.category}
+                        </span>
+                    </td>
+                    <td class="p-3 text-center font-semibold">${c.credit}</td>
+                    <td class="p-3 text-slate-600">${c.dept}</td>
+                    <td class="p-3 text-right font-black text-indigo-700 text-sm">${val.toLocaleString()} M</td>
+                    <td class="p-3 text-center">
+                        <div class="w-24 bg-slate-100 h-3 rounded-full mx-auto overflow-hidden border border-slate-200">
+                            <div class="bg-indigo-600 h-full rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium">${pct}%</span>
+                    </td>
+                    <td class="p-3 text-center font-bold text-amber-600">${cutoffDisplay}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="switchTab('wishlist')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-medium">
+                            수정
+                        </button>
+                    </td>
+                </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function renderWalletTab() {
+            if (!currentUser) return;
+
+            const { remaining, totalAllocated, appliedCount } = updateOverviewStats();
+
+            const total = currentUser.totalMileage;
+            const usedPct = Math.round((totalAllocated / total) * 100);
+
+            document.getElementById('walletUsedPct').innerText = usedPct;
+            document.getElementById('walletUsed').innerText = totalAllocated.toLocaleString();
+            document.getElementById('walletTotal').innerText = total.toLocaleString();
+
+            const bar = document.getElementById('walletProgressBar');
+            if (bar) bar.style.width = `${usedPct}%`;
+
+            document.getElementById('walletCardTotal').innerText = `${total.toLocaleString()} M`;
+            document.getElementById('walletCardRemain').innerText = `${remaining.toLocaleString()} M`;
+            document.getElementById('walletCardCount').innerText = `${appliedCount} 과목`;
+
+            // Breakdown List
+            const breakdownContainer = document.getElementById('walletBreakdownList');
+            if (!breakdownContainer) return;
+
+            const activeBids = Object.keys(bids).filter(code => bids[code] > 0);
+
+            if (activeBids.length === 0) {
+                breakdownContainer.innerHTML = '<p class="text-xs text-slate-400">현재 할당된 마일리지 내역이 없습니다.</p>';
+                return;
+            }
+
+            let html = '';
+            activeBids.forEach(code => {
+                const val = bids[code];
+                const c = courses.find(item => item.code === code) || initialCourses.find(item => item.code === code);
+                if (!c) return;
+
+                const pctOfTotal = Math.round((val / total) * 100);
+
+                html += `
+                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-xs text-slate-800">${c.name}</span>
+                            <span class="text-[10px] text-slate-400">(${c.code})</span>
+                        </div>
+                        <span class="text-[11px] text-slate-500">${c.credit} 학점 | ${c.dept}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm font-black text-indigo-600">${val.toLocaleString()} M</span>
+                        <span class="text-[10px] text-slate-400 block">전체 마일리지의 ${pctOfTotal}%</span>
+                    </div>
+                </div>
+                `;
+            });
+
+            breakdownContainer.innerHTML = html;
+        }
+
+        function simulateRoundEnd() {
+            if (Object.keys(bids).filter(k => bids[k] > 0).length === 0) {
+                if (!confirm("할당된 마일리지가 없습니다! 이대로 1차 수강신청을 마감하시겠습니까?")) return;
+            }
+
+            // Run priority distribution algorithm for each course
+            const results = {};
+
+            courses.forEach(course => {
+                const quota = course.capacity;
+                const userBid = bids[course.code] || 0;
+
+                // Generate peer applicants mock list
+                const peerApplicants = generatePeerApplicants(course, currentUser, userBid);
+
+                // Sort Peer Applicants based on 4 mandatory rules:
+                // Rule 1: Mileage Allocated (Desc)
+                // Rule 2: Is Major Student (True > False, GE courses = False for all)
+                // Rule 3: Grade / Academic Year (Early Grad highest score 5, 4th yr 4, 3rd yr 3, 2nd yr 2, 1st yr 1)
+                // Rule 4: Random Seed tie-breaker
+                peerApplicants.sort((a, b) => {
+                    if (b.mileage !== a.mileage) {
+                        return b.mileage - a.mileage;
+                    }
+                    if (b.isMajor !== a.isMajor) {
+                        return (b.isMajor ? 1 : 0) - (a.isMajor ? 1 : 0);
+                    }
+                    if (b.gradeScore !== a.gradeScore) {
+                        return b.gradeScore - a.gradeScore;
+                    }
+                    return a.randomSeed - b.randomSeed;
                 });
 
-                const data = await response.json();
-                if (data.success) {
-                    renderUI(data);
-                }
-            } catch (err) {
-                console.log("Mock fallback simulation executed");
-                // API 서버 실행 전 오프라인 가상 백업 렌더링
-                simulateLocalFallback(courseId, parseInt(mileage));
-            }
-        }
+                // Assign status
+                const enrolledList = peerApplicants.slice(0, quota);
+                const waitlist = peerApplicants.slice(quota);
 
-        function renderUI(data) {
-            const analysis = data.analysis;
-            const orderbook = data.orderbook;
+                const userRankIndex = peerApplicants.findIndex(p => p.isCurrentUser);
+                const userEnrolled = (userRankIndex >= 0 && userRankIndex < quota);
 
-            // 1. 신호등 및 확률 업데이트
-            document.getElementById('probVal').innerHTML = `${analysis.probability}<span class="text-lg text-slate-400">%</span>`;
-            document.getElementById('cutoffVal').innerHTML = `${analysis.cutoff_mileage}<span class="text-sm font-normal text-slate-400"> Pt</span>`;
-            document.getElementById('rankInfo').innerHTML = `예상 석차: <strong class="text-indigo-400">${analysis.user_rank}위</strong> / 정원 ${analysis.capacity}명`;
-            document.getElementById('statusLabel').innerText = analysis.status_label;
-            document.getElementById('recommendationText').innerText = analysis.recommendation;
+                // Cutoff Mileage
+                const cutoffApplicant = enrolledList[enrolledList.length - 1];
+                const actualCutoff = cutoffApplicant ? cutoffApplicant.mileage : 0;
 
-            const lightBg = document.getElementById('lightBg');
-            const lightIcon = document.getElementById('lightIcon');
-            const statusLabel = document.getElementById('statusLabel');
-
-            lightBg.className = "w-20 h-20 rounded-2xl flex items-center justify-center border-2 transition-all";
-            
-            if (analysis.status === "GREEN") {
-                lightBg.classList.add('bg-emerald-500/20', 'border-emerald-500', 'glow-green');
-                lightIcon.className = "fa-solid fa-circle-check text-4xl text-emerald-400";
-                statusLabel.className = "text-2xl font-black text-emerald-400 mt-0.5";
-            } else if (analysis.status === "YELLOW") {
-                lightBg.classList.add('bg-amber-500/20', 'border-amber-500', 'glow-yellow');
-                lightIcon.className = "fa-solid fa-triangle-exclamation text-4xl text-amber-400";
-                statusLabel.className = "text-2xl font-black text-amber-400 mt-0.5";
-            } else {
-                lightBg.classList.add('bg-rose-500/20', 'border-rose-500', 'glow-red');
-                lightIcon.className = "fa-solid fa-circle-xmark text-4xl text-rose-400";
-                statusLabel.className = "text-2xl font-black text-rose-400 mt-0.5";
-            }
-
-            // 2. 주식 호가창(Order Book) 테이블 렌더링
-            const tbody = document.getElementById('orderBookBody');
-            tbody.innerHTML = '';
-
-            const userMileage = data.user_mileage;
-
-            orderbook.forEach(row => {
-                const tr = document.createElement('tr');
-                const isUserPt = (row.mileage === userMileage);
-
-                if (row.is_cutoff_line) {
-                    tr.className = "bg-rose-950/40 border-y-2 border-rose-500/80 font-bold";
-                } else if (isUserPt) {
-                    tr.className = "bg-indigo-950/50 border-l-4 border-indigo-400";
-                } else {
-                    tr.className = "hover:bg-slate-800/40 transition";
-                }
-
-                const widthPercent = Math.min(100, row.ratio_to_capacity);
-
-                tr.innerHTML = `
-                    <td class="py-2 px-3 font-semibold ${isUserPt ? 'text-indigo-400' : 'text-slate-300'}">
-                        ${row.mileage} Pt ${isUserPt ? '<span class="text-[10px] bg-indigo-500 text-white px-1.5 py-0.5 rounded ml-1">내 베팅</span>' : ''}
-                    </td>
-                    <td class="py-2 px-3 text-slate-400">${row.count}명</td>
-                    <td class="py-2 px-3 text-slate-300 font-bold">${row.accumulated}명</td>
-                    <td class="py-2 px-3">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-                                <div class="h-full ${row.accumulated <= 40 ? 'bg-indigo-500' : 'bg-rose-500/80'}" style="width: ${widthPercent}%"></div>
-                            </div>
-                            ${row.is_cutoff_line ? '<span class="text-[10px] text-rose-400 font-bold whitespace-nowrap"><i class="fa-solid fa-scissors mr-1"></i>정원 컷오프</span>' : ''}
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
+                results[course.code] = {
+                    course,
+                    totalApplicants: peerApplicants.length,
+                    quota,
+                    enrolledList,
+                    waitlist,
+                    userRank: userRankIndex + 1,
+                    userEnrolled,
+                    userBid,
+                    actualCutoff
+                };
             });
+
+            round1Results = results;
+            currentRound = 2; // Round 1 done
+            
+            // UI Update Header
+            const badgeText = document.getElementById('roundBadgeText');
+            if (badgeText) badgeText.innerText = "1차 수강신청 결과 발표";
+            
+            renderResultsModal(results);
         }
 
-        function simulateLocalFallback(courseId, mileage) {
-            const mockData = {
-                user_mileage: mileage,
-                analysis: {
-                    user_rank: mileage > 20 ? 12 : (mileage > 14 ? 38 : 54),
-                    capacity: 40,
-                    cutoff_mileage: 15,
-                    status: mileage > 20 ? 'GREEN' : (mileage >= 15 ? 'YELLOW' : 'RED'),
-                    status_label: mileage > 20 ? '합격 유력 (안전)' : (mileage >= 15 ? '커트라인 경계 (주의)' : '탈락 위험 (불안)'),
-                    probability: mileage > 20 ? 92 : (mileage >= 15 ? 65 : 18),
-                    recommendation: mileage > 20 
-                        ? '현재 매우 안정권입니다. 여유 마일리지를 타 과목에 배분하는 전략을 고려하세요.'
-                        : '정원 컷오프 근처입니다. 마일리지를 2~3점 더 올려 안전권을 확보하는 것을 추천합니다.'
-                },
-                orderbook: Array.from({length: 36}, (_, i) => 36 - i).map(m => ({
-                    mileage: m,
-                    count: Math.floor(Math.random() * 4) + 1,
-                    accumulated: Math.min(70, Math.floor((37 - m) * 1.8)),
-                    is_cutoff_line: m === 15,
-                    ratio_to_capacity: Math.min(100, Math.round(((37 - m) * 1.8 / 40) * 100))
-                }))
-            };
-            renderUI(mockData);
+        // Peer Applicant Generator helper
+        function generatePeerApplicants(course, userObj, userBid) {
+            const totalApplicantsCount = course.applicantsCount;
+            const list = [];
+
+            const isUserMajor = (userObj.major === course.dept && !course.category.includes('교양'));
+            let userGradeScore = userObj.grade;
+            if (userObj.isEarlyGrad) userGradeScore = 5; // Early Grad Highest
+
+            // Add Current User if bid > 0
+            if (userBid > 0) {
+                list.push({
+                    name: `${userObj.name} (나)`,
+                    studentId: userObj.studentId,
+                    mileage: userBid,
+                    isMajor: isUserMajor,
+                    gradeScore: userGradeScore,
+                    randomSeed: Math.random(),
+                    isCurrentUser: true
+                });
+            }
+
+            const isGE = course.category.includes('교양');
+
+            // Generate remaining peer applicants
+            for (let i = list.length; i < totalApplicantsCount; i++) {
+                const randMileage = Math.floor(Math.random() * 100) * 10; // 0 to 1000
+                const isPeerMajor = isGE ? false : (Math.random() < 0.6); // 60% major for major courses
+                const isPeerEarlyGrad = (Math.random() < 0.1);
+                let peerGrade = Math.floor(Math.random() * 4) + 1; // 1 ~ 4
+                let peerGradeScore = isPeerEarlyGrad ? 5 : peerGrade;
+
+                list.push({
+                    name: `학생_${i + 100}`,
+                    studentId: `2023${1000 + i}`,
+                    mileage: randMileage,
+                    isMajor: isPeerMajor,
+                    gradeScore: peerGradeScore,
+                    randomSeed: Math.random(),
+                    isCurrentUser: false
+                });
+            }
+
+            return list;
         }
 
-        // 초기 실행
-        window.addEventListener('DOMContentLoaded', () => {
-            runSimulation();
-        });
+        function renderResultsModal(results) {
+            const modal = document.getElementById('resultsModal');
+            const summaryBanner = document.getElementById('resultsSummaryBanner');
+            const courseListContainer = document.getElementById('resultsCourseList');
+
+            let totalEnrolledCount = 0;
+            let totalBidCoursesCount = 0;
+
+            let courseHtml = '';
+
+            Object.keys(results).forEach(code => {
+                const res = results[code];
+                if (res.userBid > 0) {
+                    totalBidCoursesCount++;
+                    if (res.userEnrolled) totalEnrolledCount++;
+                }
+
+                const statusBadge = res.userBid === 0 ? 
+                    '<span class="px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-500">미신청</span>' :
+                    (res.userEnrolled ? 
+                        '<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">🎉 수강 확정</span>' :
+                        '<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">❌ 수강 탈락</span>'
+                    );
+
+                courseHtml += `
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-bold text-sm text-slate-900">${res.course.name}</span>
+                                <span class="text-xs text-slate-500">(${res.course.code})</span>
+                                ${statusBadge}
+                            </div>
+                            <p class="text-xs text-slate-500">
+                                정원: ${res.quota}명 | 총 지원: ${res.totalApplicants}명 | 최종 Cutoff: <strong class="text-amber-600">${res.actualCutoff} M</strong>
+                            </p>
+                        </div>
+
+                        ${res.userBid > 0 ? `
+                        <div class="text-right sm:border-l sm:pl-4 border-slate-200">
+                            <span class="text-xs text-slate-500 block">나의 베팅: <strong class="text-indigo-700 font-bold">${res.userBid} M</strong></span>
+                            <span class="text-xs font-bold ${res.userEnrolled ? 'text-emerald-600' : 'text-rose-600'}">
+                                석차: ${res.userRank}위 / ${res.totalApplicants}명
+                            </span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                `;
+            });
+
+            summaryBanner.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-bold text-slate-900 text-base">나의 1차 수강신청 결과 Summary</h4>
+                        <p class="text-xs text-slate-600 mt-0.5">신청한 ${totalBidCoursesCount}개 과목 중 <strong class="text-indigo-600 font-bold">${totalEnrolledCount}개 과목</strong> 수강 확정</p>
+                    </div>
+                    <div class="text-2xl font-black ${totalEnrolledCount > 0 ? 'text-emerald-600' : 'text-slate-600'}">
+                        ${totalEnrolledCount} / ${totalBidCoursesCount} Success
+                    </div>
+                </div>
+            `;
+
+            courseListContainer.innerHTML = courseHtml;
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeResultsModal() {
+            document.getElementById('resultsModal').classList.add('hidden');
+        }
+
+        function startSecondRound() {
+            closeResultsModal();
+            currentRound = 3; // 2차 수강신청
+
+            const badgeText = document.getElementById('roundBadgeText');
+            const badge = document.getElementById('roundBadge');
+            if (badgeText) badgeText.innerText = "2차 수강신청 진행중 (잔여 정원)";
+            if (badge) badge.className = "hidden sm:flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200";
+
+            // Recalculate courses remaining capacities
+            courses.forEach(c => {
+                const r = round1Results[c.code];
+                if (r) {
+                    const filled = Math.min(r.totalApplicants, r.quota);
+                    const leftOver = Math.max(0, r.quota - filled);
+                    c.capacity = leftOver;
+                    c.applicantsCount = 0; // Reset for 2nd round
+                    c.baseCutoff = Math.floor(c.baseCutoff * 0.4); // Lower cutoff expectation
+                }
+            });
+
+            // Filter out already enrolled courses from wishlist / bids
+            if (round1Results) {
+                Object.keys(round1Results).forEach(code => {
+                    if (round1Results[code].userEnrolled) {
+                        delete bids[code];
+                        wishlist = wishlist.filter(item => item !== code);
+                    }
+                });
+            }
+
+            alert("2차 수강신청이 시작되었습니다! 1차에서 잔여 인원이 남은 과목을 확인하고 남은 마일리지를 할당하세요.");
+
+            updateOverviewStats();
+            renderWishlist();
+            renderAllCoursesTable();
+            renderAllocationTable();
+            renderWalletTab();
+            switchTab('allCourses');
+        }
     </script>
 </body>
 </html>
